@@ -11,10 +11,6 @@ dependencies = [
     "llm>=0.26"
 ]
 
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
-
 [project.urls]
 Homepage = "https://github.com/Chromadream/llm-tools-read-write-file"
 Changelog = "https://github.com/Chromadream/llm-tools-read-write-file/releases"
@@ -24,8 +20,14 @@ CI = "https://github.com/Chromadream/llm-tools-read-write-file/actions"
 [project.entry-points.llm]
 llm_tools_read_write_file = "llm_tools_read_write_file"
 
+
 [project.optional-dependencies]
 test = ["pytest", "llm-echo>=0.3a1"]
+
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
 
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
