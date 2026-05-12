@@ -1,0 +1,42 @@
+[project]
+name = "llm-tools-read-write-file"
+version = "0.1.0"
+description = "A tool that can read and write files into the current working directory."
+readme = "README.md"
+authors = [{name = "Jonathan Nicholas"}]
+license = "Apache-2.0"
+classifiers = []
+requires-python = ">=3.9"
+dependencies = [
+    "llm>=0.26"
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project.urls]
+Homepage = "https://github.com/Chromadream/llm-tools-read-write-file"
+Changelog = "https://github.com/Chromadream/llm-tools-read-write-file/releases"
+Issues = "https://github.com/Chromadream/llm-tools-read-write-file/issues"
+CI = "https://github.com/Chromadream/llm-tools-read-write-file/actions"
+
+[project.entry-points.llm]
+llm_tools_read_write_file = "llm_tools_read_write_file"
+
+[project.optional-dependencies]
+test = ["pytest", "llm-echo>=0.3a1"]
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+major_on_zero = false
+allow_zero_version = true
+branch = "main"
+commit_message = "chore(release): {version} [skip ci]"
+build_command = "python -m pip install build && python -m build"
+upload_to_vcs_release = true
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = ["build", "chore", "ci", "docs", "feat", "fix", "perf", "style", "refactor", "test"]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
