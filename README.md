@@ -5,7 +5,7 @@
 [![Tests](https://github.com/Chromadream/llm-tools-read-write-file/actions/workflows/test.yml/badge.svg)](https://github.com/Chromadream/llm-tools-read-write-file/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/Chromadream/llm-tools-read-write-file/blob/main/LICENSE)
 
-LLM tools for reading and writing files inside the current working directory.
+A tool plugin for [LLM](https://llm.datasette.io/) that allows you to read and write files inside the current working directory.
 
 The plugin ships an [`llm.Toolbox`](https://llm.datasette.io/en/stable/python-api.html#toolboxes) called `ReadWriteFile` that exposes two methods:
 
