@@ -1,6 +1,6 @@
 [project]
 name = "llm-tools-read-write-file"
-version = "0.1.0"
+version = "0.2.0"
 description = "A tool that can read and write files into the current working directory."
 readme = "README.md"
 authors = [{name = "Jonathan Nicholas"}]
@@ -23,6 +23,7 @@ llm_tools_read_write_file = "llm_tools_read_write_file"
 
 [project.optional-dependencies]
 test = ["pytest", "llm-echo>=0.3a1"]
+
 
 
 [build-system]
