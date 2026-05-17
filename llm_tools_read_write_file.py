@@ -23,6 +23,9 @@ def _resolve_within_cwd(path: str) -> Path:
     return candidate
 
 
+import json
+
+
 class ReadWriteFile(llm.Toolbox):
     """File read/write tools sandboxed to the current working directory."""
 
@@ -81,9 +84,50 @@ class ReadWriteFile(llm.Toolbox):
         return f"Wrote {len(content)} characters to {path}"
 
 
+class ListFiles(ReadWriteFile):
+    """Directory listing + file read/write tools sandboxed to CWD."""
+
+    name: str = "List Files"
+
+    def list_files(self, path: str = ".") -> str:
+        """List files and directories inside a directory in the CWD.
+
+        Returns a JSON array of objects with ``name``, ``type``, and ``size``
+        (files only).  Hidden / dot-files are excluded.
+
+        Args:
+            path: Path to the directory, interpreted relative to the CWD.
+                Absolute paths, ``..`` traversal, and symlinks that point
+                outside the CWD are rejected.
+        """
+        try:
+            target = _resolve_within_cwd(path)
+        except ValueError as exc:
+            return f"Error: {exc}"
+
+        if not target.exists():
+            return f"Error: {path!r} does not exist"
+        if not target.is_dir():
+            return f"Error: {path!r} is not a directory"
+
+        entries = []
+        for child in sorted(target.iterdir()):
+            if child.name.startswith("."):
+                continue
+            entry = {"name": child.name, "type": "directory" if child.is_dir() else "file"}
+            if not child.is_dir():
+                entry["size"] = child.stat().st_size
+            entries.append(entry)
+        return json.dumps(entries)
+
+
 @llm.hookimpl
 def register_tools(register):
-    tools = ReadWriteFile()
-    register(tools.read_file, "read_file")
-    register(tools.write_file, "write_file")
+    rw = ReadWriteFile()
+    register(rw.read_file, "read_file")
+    register(rw.write_file, "write_file")
     register(ReadWriteFile, "ReadWriteFile")
+
+    lf = ListFiles()
+    register(lf.list_files, "list_files")
+    register(ListFiles, "ListFiles")

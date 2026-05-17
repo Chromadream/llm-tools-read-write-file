@@ -5,11 +5,14 @@ from pathlib import Path
 import llm
 import pytest
 
-from llm_tools_read_write_file import ReadWriteFile
+from llm_tools_read_write_file import ListFiles, ReadWriteFile
 
 _tools = ReadWriteFile()
 read_file = _tools.read_file
 write_file = _tools.write_file
+
+_list_tools = ListFiles()
+list_files = _list_tools.list_files
 
 
 @pytest.fixture
@@ -119,8 +122,106 @@ def test_read_file_rejects_directory(sandbox):
 
 
 # ---------------------------------------------------------------------------
+# list_files
+# ---------------------------------------------------------------------------
+
+
+def test_list_files_lists_sandbox(sandbox):
+    (sandbox / "a.txt").write_text("hi")
+    (sandbox / "b.txt").write_text("hey")
+    (sandbox / "sub").mkdir()
+
+    result = json.loads(list_files("."))
+    names_by_type = {}
+    for entry in result:
+        names_by_type.setdefault(entry["type"], set()).add(entry["name"])
+    assert names_by_type["file"] == {"a.txt", "b.txt"}
+    assert names_by_type["directory"] == {"sub"}
+
+
+def test_list_files_subdirectory(sandbox):
+    sub = sandbox / "sub"
+    sub.mkdir()
+    (sub / "inner.txt").write_text("inside")
+
+    result = json.loads(list_files("sub"))
+    assert len(result) == 1
+    assert result[0]["name"] == "inner.txt"
+    assert result[0]["type"] == "file"
+
+
+def test_list_files_excludes_dotfiles(sandbox):
+    (sandbox / "visible.txt").write_text("yep")
+    (sandbox / ".hidden").write_text("nope")
+
+    result = json.loads(list_files("."))
+    names = {e["name"] for e in result}
+    assert "visible.txt" in names
+    assert ".hidden" not in names
+
+
+def test_list_files_includes_file_sizes(sandbox):
+    (sandbox / "sized.txt").write_text("1234567890")
+
+    result = json.loads(list_files("."))
+    assert len(result) == 1
+    assert result[0]["name"] == "sized.txt"
+    assert result[0]["type"] == "file"
+    assert result[0]["size"] == 10
+
+
+def test_list_files_missing(sandbox):
+    assert list_files("nope").startswith("Error:")
+
+
+def test_list_files_rejects_parent_traversal(sandbox):
+    assert list_files("../").startswith("Error:")
+
+
+def test_list_files_rejects_absolute_path(sandbox):
+    assert list_files("/etc").startswith("Error:")
+
+
+def test_list_files_rejects_symlink_escape(sandbox, tmp_path_factory):
+    outside = tmp_path_factory.mktemp("outside")
+    os.symlink(outside, sandbox / "leak")
+    assert list_files("leak").startswith("Error:")
+
+
+def test_list_files_rejects_file_not_directory(sandbox):
+    (sandbox / "afile.txt").write_text("data")
+    assert list_files("afile.txt").startswith("Error:")
+
+
+def test_list_files_rejects_empty_path(sandbox):
+    assert list_files("").startswith("Error:")
+
+
+# ---------------------------------------------------------------------------
 # LLM tool registration round-trip
 # ---------------------------------------------------------------------------
+
+
+def test_tools_via_echo_model_list(sandbox):
+    """Pass ListFiles toolbox — verify list_files round-trip."""
+    model = llm.get_model("echo")
+    chain_response = model.chain(
+        json.dumps(
+            {
+                "tool_calls": [
+                    {
+                        "name": "ListFiles_list_files",
+                        "arguments": {"path": "."},
+                    },
+                ]
+            }
+        ),
+        tools=[ListFiles()],
+    )
+    responses = list(chain_response.responses())
+    tool_results = json.loads(responses[-1].text())["tool_results"]
+    result = json.loads(tool_results[0]["output"])
+    assert isinstance(result, list)
 
 
 def test_tools_via_echo_model_toolbox(sandbox):
